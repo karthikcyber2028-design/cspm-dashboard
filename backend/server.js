@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const path = require("path");
 const env = require("./src/config/env");
 
 const authRoutes = require("./src/routes/auth.routes");
@@ -15,8 +16,11 @@ const { authenticate } = require("./src/middleware/auth");
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:5173", credentials: true }));
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
@@ -32,11 +36,18 @@ app.use("/api/scans", authenticate, scanRoutes);
 app.use("/api/dashboard", authenticate, dashboardRoutes);
 app.use("/api/alerts", authenticate, alertRoutes);
 
+const frontendPath = path.join(__dirname, "public");
+app.use(express.static(frontendPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
 app.use(errorHandler);
 
 const PORT = env.PORT;
-app.listen(PORT, () => {
-  console.log(`CSPM Backend running on port ${PORT} [${env.NODE_ENV}]`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`CSPM Dashboard running on port ${PORT} [${env.NODE_ENV}]`);
 });
 
 module.exports = app;

@@ -40,22 +40,28 @@ exports._executeScan = async (scanId, credential) => {
       });
 
       let resource;
+      const resourceData = {
+        credentialId: credential.id,
+        awsId: r.awsId,
+        service: r.service,
+        name: r.name,
+        region: r.region,
+        resourceType: r.resourceType,
+        arn: r.ARN,
+        isPublic: r.isPublic,
+        isEncrypted: r.isEncrypted,
+        complianceTags: JSON.stringify(r.complianceTags || []),
+        metadata: r.metadata || {},
+        lastUpdated: new Date(),
+      };
+
       if (existing) {
         resource = await prisma.aWSResource.update({
           where: { id: existing.id },
-          data: {
-            ...r, complianceTags: r.complianceTags || [],
-            metadata: r.metadata || {}, lastUpdated: new Date(),
-          },
+          data: resourceData,
         });
       } else {
-        resource = await prisma.aWSResource.create({
-          data: {
-            credentialId: credential.id,
-            ...r, complianceTags: r.complianceTags || [],
-            metadata: r.metadata || {},
-          },
-        });
+        resource = await prisma.aWSResource.create({ data: resourceData });
       }
       resourceMap[r.awsId] = resource.id;
     }
