@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cspm-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate
+    startCommand: npx prisma db push --skip-generate && node server.js
+    envVars:
+      - NODE_ENV: production
+      - DATABASE_URL: ${{cspm_database.DATABASE_URL}}
+      - JWT_SECRET: ${{GENERATED_JWT_SECRET}}
+      - FRONTEND_URL: ${{cspm_frontend.URL}}
+    autoDeploy: true
+
+databases:
+  - name: cspm_database
+    plan: free
+    databaseName: cspm
+    user: cspm_user
